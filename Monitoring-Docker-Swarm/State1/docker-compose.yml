@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.28.1
+    volumes:
+        - './prometheus.yml:/etc/prometheus/prometheus.yml'
+    ports:
+        - '9090:9090'
+    networks:
+        - monitoring
+    depends_on:
+        - node-exporter
+    deploy:
+        placement:
+            constraints:
+                - node.role == manager
+    
+  manager-001:
+    image: quay.io/prometheus/node-exporter:v1.2.0
+    command:
+      - '--path.rootfs=/host'
+    networks:
+      - monitoring
+    volumes:
+      - '/:/host:ro,rslave'
+    deploy:
+        placement:
+            constraints:
+                - node.hostname == NODE_MANAGER_HOSTNAME
+  
+  docker-manager-001:
+    image: gcr.io/cadvisor/cadvisor:v0.36.0
+    networks: 
+        - monitoring
+    volumes: 
+        - /var/lib/docker:/var/lib/docker:ro
+        - /sys:/sys:ro
+        - /var/run:/var/run
+        - /:/rootfs:ro
+        - /var/run/docker.sock:/var/run/docker.sock:ro
+    deploy:
+        placement:
+            constraints:
+                - node.hostname == NODE_MANAGER_HOSTNAME
+
+  worker-001:
+    image: quay.io/prometheus/node-exporter:v1.2.0
+    command:
+        - '--path.rootfs=/host'
+    networks:
+        - monitoring
+    volumes:
+        - '/:/host:ro,rslave'
+    deploy:
+        placement:
+            constraints:
+                - node.hostname == NODE_WORKER_HOSTNAME
+
+  docker-worker-001:
+    image: gcr.io/cadvisor/cadvisor:v0.36.0
+    networks: 
+        - monitoring
+    volumes: 
+        - /var/lib/docker:/var/lib/docker:ro
+        - /sys:/sys:ro
+        - /var/run:/var/run
+        - /:/rootfs:ro
+        - /var/run/docker.sock:/var/run/docker.sock:ro
+    deploy:
+        placement:
+            constraints:
+                - node.hostname == NODE_WORKER_HOSTNAME
+
+  grafana:
+    image: grafana/grafana:master
+    ports: 
+      - '3000:3000'
+    networks:
+      - monitoring
+    deploy:
+        placement:
+            constraints:
+                - node.role == manager
+
+networks:
+  monitoring:
+    external: 
+        name: monitoring-network
