@@ -16,9 +16,13 @@ services:
       - node-exporter
 
   node-exporter:
-    image: quay.io/prometheus/node-exporter:v1.2.0
+    image: quay.io/prometheus/custom/node-exporter:v1.2.0
+    environment:
+      - NODE_ID={{.Node.ID}}
+      - NODE_NAME={{.Node.Hostname}}
     command:
       - '--path.rootfs=/host'
+      - '--collector.textfile.directory=/etc/node-exporter'
     ports:
       - 9100:9100
     networks: 
