@@ -1,0 +1,11 @@
+global:
+  resolve_timeout: 1m
+
+route:
+  receiver: 'broadcaster'
+
+receivers:
+    - name: 'broadcaster'
+      webhook_configs:
+      # https://prometheus.io/docs/alerting/latest/configuration/#receiver
+      - url: http://YOUR_BROADCAST_ADDRESS # replace with your PagerTree webhook url

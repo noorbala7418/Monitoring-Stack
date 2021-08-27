@@ -3,17 +3,16 @@ services:
   prometheus:
     image: prom/prometheus:v2.28.1
     volumes:
-      - ./prometheus/:/etc/prometheus/
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
     ports:
       - 9090:9090
     networks: 
       - monitoring
-    restart: always
+    restart: unless-stopped
     depends_on: 
       - cadvisor
-      - alertmanager
       - node-exporter
 
   node-exporter:
@@ -32,22 +31,6 @@ services:
       - '/:/host:ro,rslave'
     restart: unless-stopped
 
-
-  alertmanager:
-    image: prom/alertmanager:main
-    ports:
-      - 9093:9093
-    volumes:
-      - ./alertmanager/:/etc/alertmanager/
-    restart: always
-    command:
-      - '--config.file=/etc/alertmanager/config.yml'
-      - '--storage.path=/alertmanager'
-    networks: 
-      - monitoring
-    # deploy:
-    #   mode: global
-
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     ports:
@@ -61,23 +44,10 @@ services:
       - monitoring
     restart: unless-stopped
 
-  blackbox_exporter:
-    image: prom/blackbox-exporter:master
-    ports:
-      - 9115:9115
-    volumes:
-      - ./blackbox/:/etc/blackboxexporter/
-    command:
-      - '--config.file=/etc/blackboxexporter/config.yml'
-    restart: always
-    networks: 
-      - monitoring
-
   grafana:
     image: grafana/grafana:master
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
-      # - GF_AUTH_DISABLE_LOGIN_FORM=false
     depends_on:
       - prometheus
     ports:
